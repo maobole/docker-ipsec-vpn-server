@@ -1,0 +1,23 @@
+假设： 
+公司内网 192.168.10.0/24 
+家里网络 192.168.1.0/24 
+你已经配置好VPN并且可以使用了。
+
+公司网管为了省事一般会让你把“通过VPN连接发送所有流量”给勾上，首先我们要把这个选项取消掉，毕竟我们的目的不是让所有流量都走VPN。 
+打开终端编辑/etc/ppp/ip-up文件，没有就新建一个
+
+# sudo vi /etc/ppp/ip-up
+输入以下内容
+
+#!/bin/sh
+/sbin/route add -net 192.168.10.0/24 -interface $1
+192.168.10.0/24是需要转发的网络地址，$1是VPN的接口(e.g. ppp0)。 
+保存退出后赋予权限。
+
+# sudo chmod 0755 /etc/ppp/ip-up
+这个文件以后就会在每次连接VPN的时候执行，把新的路由写入路由表，实现内外网的分流。 
+我们运行netstat -nr查看Internet(IPV4)的信息，可以看到以下内容，这时候就已经完成了，如果有其他的流量需要走VPN，一样写到ip-up文件里去就可以了。
+
+Internet:
+Destination        Gateway            Flags        Refs      Use   Netif Expire
+192.168.10         ppp0               USc          ppp0
